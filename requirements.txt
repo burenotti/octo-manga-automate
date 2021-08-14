@@ -1,0 +1,6 @@
+bs4
+aiohttp
+aiogram
+tortoise-orm
+pydantic
+python-dotenv
