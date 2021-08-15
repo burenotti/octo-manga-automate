@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union, overload
 
 from aiohttp import ClientSession
 from yarl import URL
@@ -25,7 +25,20 @@ class Driver:
     async def search(self, query: str) -> List[entities.SearchResult]:
         return await self.parser.search(query)
 
+    @overload
     async def get_manga_info(self, url: URL) -> entities.MangaInfo:
+        pass
+
+    @overload
+    async def get_manga_info(self, shortname: str) -> entities.MangaInfo:
+        pass
+
+    async def get_manga_info(self, id: Union[str, URL]) -> entities.MangaInfo:
+        if isinstance(id, str):
+            url = self.HOST.with_path(id)
+        else:
+            url = id
+
         return await self.parser.get_manga_info(url)
 
     async def with_chapter_pages(self, chapter_info: entities.ChapterInfo) -> entities.Chapter:
