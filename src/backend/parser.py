@@ -55,7 +55,7 @@ class ReadMangaParser:
 
         # Parse main info
         name = dom.select_one('span.name').text
-        description = dom.select_one('meta[name="description"]').get_attribute_list('content')[0]
+        description = dom.select_one('div.manga-description').get_text(strip=True)
         score = dom.select_one('.rating-block').get_attribute_list('data-score')[0]
 
         # Parse thumbnail pictures
@@ -94,7 +94,7 @@ class ReadMangaParser:
         :return: Список страниц главы.
         """
         # Это проверка для 18+ контента
-        url = url.with_query({"mtr": True})
+        url = url.with_query({"mtr": 1})
         response = await self.session.get(url)
         pages = []
         # Этот код ужасен, но как сделать его лучше я не придумал.
