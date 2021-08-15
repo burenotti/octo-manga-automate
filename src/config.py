@@ -8,3 +8,6 @@ BOT_TOKEN = config.get("BOT_TOKEN")
 TELEGRAPH_TOKEN = config.get("TELEGRAPH_TOKEN")
 
 ADMINS_LIST = list(map(int, config.get("ADMINS_LIST").split(',')))
+
+REDIS_HOST = config.get("REDIS_HOST")
+REDIS_PORT = config.get("REDIS_PORT")
