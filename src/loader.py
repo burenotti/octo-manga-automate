@@ -1,22 +1,18 @@
-import redis
+import aioredis
 import config
 from aiohttp import ClientSession
 from backend.publisher import TelegraphPublisher
 from aiogram import Dispatcher, Bot, types
 from config import BOT_TOKEN
-from aiogram.contrib.fsm_storage.redis import RedisStorage
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from backend.driver import Driver
 
 bot = Bot(token=BOT_TOKEN, parse_mode="html")
 
-fsm_storage = RedisStorage(
-    host=config.REDIS_HOST,
-    port=config.REDIS_PORT,
-)
+fsm_storage = MemoryStorage()
 
-local_storage = {}
 
-redis = redis.Redis(
+redis = aioredis.Redis(
     host=config.REDIS_HOST,
     port=config.REDIS_PORT,
 )

@@ -1,22 +1,24 @@
 from aiogram.types import CallbackQuery
 from backend.entities import MangaInfo
 from bot.keyboards import manga_info as keyboard
-
+from utils import include_shortname
 from loader import (
     dispatcher,
-    local_storage,
     driver,
     publisher
 )
 
 
+async def on_key_error(query: CallbackQuery, callback_data: dict):
+    await query.message.delete_reply_markup()
+    await query.answer("Данная кнопка устарела и больше не работает.")
+
+
 @dispatcher.callback_query_handler(keyboard.action_callback_factory.filter())
-async def info_actions(query: CallbackQuery, callback_data: dict):
-    manga_id = callback_data.get('manga_id')
+@include_shortname(on_error=on_key_error)
+async def info_actions(query: CallbackQuery, callback_data: dict, manga_shortname: str = None):
     action = callback_data.get('action')
-    manga : MangaInfo = local_storage["manga_actions"].get(manga_id)
-    if not manga:
-        return await query.answer("Данная кнопка устарела и больше не работает.")
+    manga = await driver.get_manga_info(manga_shortname)
 
     if action == "start_read":
         if manga.chapter_list:

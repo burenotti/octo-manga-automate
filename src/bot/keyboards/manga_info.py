@@ -1,24 +1,14 @@
 from backend.entities import MangaInfo
-from loader import local_storage
 from aiogram.utils.callback_data import CallbackData
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from utils import hash_manga_info
+from utils import create_manga_id, hash_manga_info
 
 action_callback_factory = CallbackData("manga_action", "manga_id", "action")
 nav_callback_factory = CallbackData("manga_nav", "manga_id", "offset")
 
-local_storage["manga_actions"] = {}
-local_storage["manga_navigation"] = {}
 
-
-def get_action_callback(manga: MangaInfo, action: str):
-    manga_id = hash_manga_info(manga)
+def get_action_callback(manga_id: str, action: str):
     return action_callback_factory.new(manga_id, action)
-
-
-def get_nav_callback(manga: MangaInfo, offset: int):
-    manga_id = hash_manga_info(manga)
-    return nav_callback_factory.new(manga_id, offset)
 
 
 def get_keyboard(
@@ -35,18 +25,18 @@ def get_keyboard(
     return levels[level](manga_info, level, volume, offset)
 
 
-def get_info_keyboard(manga_info: MangaInfo, *args, **kwargs) -> InlineKeyboardMarkup:
+async def get_info_keyboard(manga_info: MangaInfo, *args, **kwargs) -> InlineKeyboardMarkup:
     markup = InlineKeyboardMarkup(row_width=2)
-    local_storage["manga_actions"][hash_manga_info(manga_info)] = manga_info
+    manga_id = await create_manga_id(manga_info)
     markup.row(
         InlineKeyboardButton("💗  В избранное",
-                             callback_data=get_action_callback(manga_info, "favourite")),
+                             callback_data=get_action_callback(manga_id, "favourite")),
         InlineKeyboardButton("📖  Читать c начала",
-                             callback_data=get_action_callback(manga_info, "start_read")),
+                             callback_data=get_action_callback(manga_id, "start_read")),
     )
     markup.row(
         InlineKeyboardButton("📄 Список глав",
-                             callback_data=get_action_callback(manga_info, "nav")),
+                             callback_data=get_action_callback(manga_id, "nav")),
     )
 
     return markup
