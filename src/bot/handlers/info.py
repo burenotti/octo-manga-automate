@@ -51,4 +51,5 @@ async def get_manga_info(message: Message):
         if manga_info.thumbnail_urls:
             await message.answer_photo(manga_info.thumbnail_urls[0])
 
-        await message.answer(text, reply_markup=keyboard.get_info_keyboard(manga_info))
+        markup = await keyboard.get_info_keyboard(manga_info)
+        await message.answer(text, reply_markup=markup)
