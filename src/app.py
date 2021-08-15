@@ -1,3 +1,4 @@
+import bot
 from aiogram import executor
 from loader import dispatcher
 
