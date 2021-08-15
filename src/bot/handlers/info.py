@@ -12,17 +12,24 @@ async def get_manga_info(message: Message):
 
     # await message.delete()
 
-    urls = list(filter(lambda e: e.type == "url", message.entities))
+    urls = list(filter(lambda e: e.type in ("url", "text_link"), message.entities))
     if len(urls) == 0:
 
         await message.answer("Так нельзя! После <b>/info</b> вводи ссылку!")
 
-    if len(urls) > 1:
+    elif len(urls) > 1:
 
         await message.answer("Так нельзя! Можно вводить только одну ссылку!")
 
     else:
-        url = URL(message.text[urls[0].offset: urls[0].offset + urls[0].length])
+
+        if urls[0].type == "url":
+
+            url = URL(message.text[urls[0].offset: urls[0].offset + urls[0].length])
+
+        else:
+
+            url = URL(urls[0].url)
 
         if url.host != 'readmanga.live':
             return await message.answer("Ты чего? Я работаю только с readmanga.live")

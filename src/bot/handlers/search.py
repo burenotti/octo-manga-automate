@@ -18,7 +18,7 @@ async def search(query: InlineQuery):
     items = []
     for match in result:
         if match.type == ResultType.Manga:
-            input_content = InputTextMessageContent(f"/info {match.url!s}")
+            input_content = InputTextMessageContent(f"/info <a href=\"{match.url!s}\">ссылка</a>")
             result_id = md5(match.value.encode('utf-8')).hexdigest()
             items.append(InlineQueryResultArticle(
                 id=result_id,
