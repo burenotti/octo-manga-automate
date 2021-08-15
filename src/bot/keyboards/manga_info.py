@@ -1,21 +1,14 @@
-from hashlib import md5
 from backend.entities import MangaInfo
-from yarl import URL
-from typing import List, Optional
 from loader import local_storage
 from aiogram.utils.callback_data import CallbackData
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-
+from utils import hash_manga_info
 
 action_callback_factory = CallbackData("manga_action", "manga_id", "action")
 nav_callback_factory = CallbackData("manga_nav", "manga_id", "offset")
 
 local_storage["manga_actions"] = {}
 local_storage["manga_navigation"] = {}
-
-
-def hash_manga_info(manga_info: MangaInfo):
-    return md5(manga_info.url.path.encode('utf-8')).hexdigest()
 
 
 def get_action_callback(manga: MangaInfo, action: str):
