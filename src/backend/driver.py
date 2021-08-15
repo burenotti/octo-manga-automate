@@ -1,4 +1,6 @@
 from typing import List
+
+from aiohttp import ClientSession
 from yarl import URL
 from . import entities
 from .parser import ReadMangaParser
@@ -17,14 +19,13 @@ class Driver:
 
     HOST = URL("https://readmanga.live/")
 
-    def __init__(self):
-        self.parser = ReadMangaParser()
+    def __init__(self, session: ClientSession):
+        self.parser = ReadMangaParser(session=session)
 
     async def search(self, query: str) -> List[entities.SearchResult]:
         return await self.parser.search(query)
 
-    async def get_manga_info(self, shortname: str) -> entities.MangaInfo:
-        url = self.HOST.with_path(shortname)
+    async def get_manga_info(self, url: URL) -> entities.MangaInfo:
         return await self.parser.get_manga_info(url)
 
     async def with_chapter_pages(self, chapter_info: entities.ChapterInfo) -> entities.Chapter:
