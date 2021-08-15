@@ -1,5 +1,16 @@
-from hashlib import md5
-from backend.entities import MangaInfo
+from .redis_ import (
+    include_shortname,
+    create_manga_id,
+    hash_manga_info
+)
+
+
+__all__ = [
+    "get_stars_score",
+    "create_manga_id",
+    "include_shortname",
+    "hash_manga_info"
+]
 
 
 def get_stars_score(score: float, max_score: float = 5.0):
@@ -8,6 +19,3 @@ def get_stars_score(score: float, max_score: float = 5.0):
     moons = '🖤' * (10 - decimal_score)
     return f"{stars}{moons} ({score} / {max_score})"
 
-
-def hash_manga_info(manga_info: MangaInfo):
-    return md5(manga_info.url.path.encode('utf-8')).hexdigest()
