@@ -1,6 +1,6 @@
 from utils import get_stars_score
 from aiogram.dispatcher.filters import Command, Text
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, InputMediaPhoto
 from yarl import URL
 
 from loader import dispatcher, bot, driver
@@ -9,8 +9,6 @@ from bot.keyboards import manga_info as keyboard
 
 @dispatcher.message_handler(Command("info"))
 async def get_manga_info(message: Message):
-
-    # await message.delete()
 
     urls = list(filter(lambda e: e.type in ("url", "text_link"), message.entities))
     if len(urls) == 0:
@@ -49,7 +47,8 @@ async def get_manga_info(message: Message):
                 f"{manga_info.description}")
 
         if manga_info.thumbnail_urls:
-            await message.answer_photo(manga_info.thumbnail_urls[0])
+            media = list(map(InputMediaPhoto, manga_info.thumbnail_urls))
+            await message.answer_media_group(media)
 
         markup = await keyboard.get_info_keyboard(manga_info)
         await message.answer(text, reply_markup=markup)
