@@ -2,7 +2,7 @@ import aioredis
 import config
 from aiohttp import ClientSession
 from backend.publisher import TelegraphPublisher
-from aiogram import Dispatcher, Bot, types
+from aiogram import Dispatcher, Bot
 from config import BOT_TOKEN
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from backend.driver import Driver

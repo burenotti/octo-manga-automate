@@ -13,7 +13,7 @@ def include_shortname(
 ):
     def decorator(function):
 
-        async def wrapper(query: CallbackQuery, callback_data: Dict[str, Any]):
+        async def wrapper(query: CallbackQuery, callback_data: Dict[str, Any], *args, **kwargs):
 
             manga_id = callback_data.get("manga_id")
             key = redis_key_factory.new(manga_id)
@@ -27,6 +27,8 @@ def include_shortname(
 
                 await function(query,
                                callback_data,
+                               *args,
+                               **kwargs,
                                manga_shortname=manga_shortname.decode('utf-8'))
 
         return wrapper

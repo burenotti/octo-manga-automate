@@ -1,7 +1,9 @@
-from aiogram.types import CallbackQuery
+from aiogram.dispatcher import FSMContext
+from aiogram.types import CallbackQuery, Message
 from backend.entities import MangaInfo
+from bot.states import NavStates
 from bot.keyboards import manga_info as keyboard
-from utils import include_shortname
+from utils import include_shortname, create_manga_id
 from loader import (
     dispatcher,
     driver,
@@ -16,7 +18,12 @@ async def on_key_error(query: CallbackQuery, callback_data: dict):
 
 @dispatcher.callback_query_handler(keyboard.action_callback_factory.filter())
 @include_shortname(on_error=on_key_error)
-async def info_actions(query: CallbackQuery, callback_data: dict, manga_shortname: str = None):
+async def info_actions(
+        query: CallbackQuery,
+        callback_data: dict,
+        manga_shortname: str = None,
+        **kwargs
+):
     action = callback_data.get('action')
     manga = await driver.get_manga_info(manga_shortname)
 
@@ -24,7 +31,106 @@ async def info_actions(query: CallbackQuery, callback_data: dict, manga_shortnam
         if manga.chapter_list:
             chapter = await driver.with_chapter_pages(manga.chapter_list[0])
             response = publisher.publish(chapter)
-            await dispatcher.bot.send_message(query.from_user.id, response["url"])
+            markup = await keyboard.get_in_place_keyboard(manga, 1)
+            url = response["url"]
+            await query.message.answer(f"<a href=\"{url}\">{chapter.info.name}</a>",
+                                       reply_markup=markup)
 
     elif action == "favourite":
         return await query.answer("Очень жаль, но это пока не работает(")
+
+    elif action == "nav":
+
+        return await query.message.edit_reply_markup(
+            await keyboard.get_chapter_keyboard(manga)
+        )
+
+
+@dispatcher.callback_query_handler(keyboard.nav_callback_factory.filter(), state='*')
+@include_shortname(on_error=on_key_error)
+async def navigate(
+        query: CallbackQuery,
+        callback_data: dict,
+        state: FSMContext,
+        manga_shortname: str = None,
+):
+    action = callback_data.get('action')
+    manga = await driver.get_manga_info(manga_shortname)
+
+    if action in ("forward", "back"):
+        offset = int(callback_data.get('offset')) + (10 if action == "forward" else -10)
+        await query.message.edit_reply_markup(
+            await keyboard.get_chapter_keyboard(manga, offset)
+        )
+
+    elif action == "cancel":
+        await query.message.edit_reply_markup(
+            await keyboard.get_info_keyboard(manga)
+        )
+
+    elif action == "number":
+        await query.message.answer(f"Введите номер главы ({1}-{len(manga.chapter_list)})")
+        await state.set_data({
+            "shortname": manga_shortname,
+        })
+        await NavStates.ByNumber.set()
+
+    elif action == "open":
+
+        number = int(callback_data.get("chapter"))
+
+        chapter = await driver.with_chapter_pages(manga.chapter_list[number - 1])
+        response = publisher.publish(chapter)
+
+        markup = await keyboard.get_in_place_keyboard(manga, number)
+        url = response["url"]
+        await query.message.answer(f"<a href=\"{url}\">{chapter.info.name}</a>",
+                                   reply_markup=markup)
+
+
+@dispatcher.message_handler(state=NavStates.ByNumber)
+async def get_chapter_by_number(message: Message, state: FSMContext):
+    shortname = (await state.get_data()).get("shortname")
+    manga = await driver.get_manga_info(shortname)
+    try:
+
+        number = int(message.text)
+
+    except ValueError:
+
+        return await message.answer("Но ведь это даже не число! Давай еще раз!")
+
+    if 1 <= number <= len(manga.chapter_list):
+        chapter = await driver.with_chapter_pages(manga.chapter_list[number - 1])
+        response = publisher.publish(chapter)
+
+        markup = await keyboard.get_in_place_keyboard(manga, number - 1)
+        url = response["url"]
+        await message.answer(f"<a href=\"{url}\">{chapter.info.name}</a>",
+                             reply_markup=markup)
+        await state.finish()
+
+    else:
+
+        await message.answer("Нету такой главы! Давай по новой!")
+
+
+@dispatcher.callback_query_handler(keyboard.in_place_callback_factory.filter())
+@include_shortname(on_error=on_key_error)
+async def in_place(
+        query: CallbackQuery,
+        callback_data: dict,
+        manga_shortname: str,
+        **kwargs
+):
+    action = callback_data.get('action')
+    current_chapter = int(callback_data.get('chapter'))
+    manga = await driver.get_manga_info(manga_shortname)
+
+    if action == "next":
+        next_chapter_info = manga.chapter_list[current_chapter]
+        next_chapter = await driver.with_chapter_pages(next_chapter_info)
+        url = publisher.publish(next_chapter)["url"]
+        markup = await keyboard.get_in_place_keyboard(manga, next_chapter_info.number)
+        await query.message.answer(f"<a href=\"{url}\">{next_chapter.info.name}</a>",
+                                   reply_markup=markup)

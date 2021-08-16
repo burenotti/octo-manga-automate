@@ -1,3 +1,4 @@
+from random import randint
 from aiogram.dispatcher.filters import Command
 from aiogram.types import Message, InlineQuery, InlineQueryResultArticle, InputTextMessageContent
 from hashlib import md5
@@ -16,12 +17,11 @@ async def search(message: Message):
 async def search(query: InlineQuery):
     result = await driver.search(query.query)
     items = []
-    for match in result:
+    for index, match in enumerate(result):
         if match.type == ResultType.Manga:
             input_content = InputTextMessageContent(f"/info <a href=\"{match.url!s}\">ссылка</a>")
-            result_id = md5(match.value.encode('utf-8')).hexdigest()
             items.append(InlineQueryResultArticle(
-                id=result_id,
+                id=str(index),
                 title=match.value,
                 thumb_url=str(match.thumbnail),
                 input_message_content=input_content
