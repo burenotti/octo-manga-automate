@@ -1,7 +1,6 @@
 import aioredis
 import config
 from aiohttp import ClientSession
-from backend.publisher import TelegraphPublisher
 from aiogram import Dispatcher, Bot
 from config import BOT_TOKEN
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -21,5 +20,9 @@ session = ClientSession()
 
 dispatcher = Dispatcher(bot, storage=fsm_storage)
 
-driver = Driver(session=session)
-publisher = TelegraphPublisher(access_token=config.TELEGRAPH_TOKEN)
+driver = Driver(
+    session=session,
+    telegraph_access_token=config.TELEGRAPH_TOKEN,
+    author_name=config.TELEGRAPH_AUTHOR_NAME,
+    author_url=config.TELEGRAPH_AUTHOR_URL,
+)

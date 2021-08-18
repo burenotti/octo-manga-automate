@@ -1,1 +1,5 @@
-from ._telegraph import TelegraphPublisher
+from .publisher import TelegraphPublisher
+
+__all__ = {
+    "TelegraphPublisher",
+}

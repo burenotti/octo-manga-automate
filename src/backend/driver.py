@@ -1,5 +1,5 @@
 from typing import List, Union, overload
-
+from .publisher import TelegraphPublisher
 from aiohttp import ClientSession
 from yarl import URL
 from . import entities
@@ -19,8 +19,19 @@ class Driver:
 
     HOST = URL("https://readmanga.live/")
 
-    def __init__(self, session: ClientSession):
+    def __init__(
+            self,
+            session: ClientSession,
+            telegraph_access_token: str,
+            author_name: str = None,
+            author_url: str = None,
+    ):
         self.parser = ReadMangaParser(session=session)
+        self.publisher = TelegraphPublisher(
+            access_token=telegraph_access_token,
+            author_name=author_name,
+            author_url=author_url
+        )
 
     async def search(self, query: str) -> List[entities.SearchResult]:
         return await self.parser.search(query)
@@ -46,3 +57,24 @@ class Driver:
             chapter_info,
             await self.parser.get_chapter_pages(chapter_info.url)
         )
+
+    @overload
+    async def publish_chapter(self, chapter: entities.ChapterInfo):
+        pass
+
+    @overload
+    async def publish_chapter(self, chapter: entities.Chapter):
+        pass
+
+    async def publish_chapter(
+            self,
+            chapter: Union[entities.Chapter, entities.ChapterInfo]
+    ) -> URL:
+
+        if isinstance(chapter, entities.ChapterInfo):
+            chapter = await self.with_chapter_pages(chapter)
+
+        return await self.publisher.publish_chapter(chapter)
+
+    async def close(self):
+        return self.publisher.close()

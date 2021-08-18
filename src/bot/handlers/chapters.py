@@ -1,13 +1,11 @@
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, Message
-from backend.entities import MangaInfo
 from bot.states import NavStates
 from bot.keyboards import manga_info as keyboard
-from utils import include_shortname, create_manga_id
+from utils import include_shortname
 from loader import (
     dispatcher,
     driver,
-    publisher
 )
 
 
@@ -29,11 +27,10 @@ async def info_actions(
 
     if action == "start_read":
         if manga.chapter_list:
-            chapter = await driver.with_chapter_pages(manga.chapter_list[0])
-            response = publisher.publish(chapter)
+            chapter_info = manga.chapter_list[0]
+            url = await driver.publish_chapter(chapter_info)
             markup = await keyboard.get_in_place_keyboard(manga, 1)
-            url = response["url"]
-            await query.message.answer(f"<a href=\"{url}\">{chapter.info.name}</a>",
+            await query.message.answer(f"<a href=\"{url}\">{chapter_info.name}</a>",
                                        reply_markup=markup)
 
     elif action == "favourite":
@@ -78,13 +75,12 @@ async def navigate(
     elif action == "open":
 
         number = int(callback_data.get("chapter"))
-
-        chapter = await driver.with_chapter_pages(manga.chapter_list[number - 1])
-        response = publisher.publish(chapter)
+        chapter = manga.chapter_list[number - 1]
+        url = await driver.publish_chapter(chapter)
 
         markup = await keyboard.get_in_place_keyboard(manga, number)
-        url = response["url"]
-        await query.message.answer(f"<a href=\"{url}\">{chapter.info.name}</a>",
+
+        await query.message.answer(f"<a href=\"{url}\">{chapter.name}</a>",
                                    reply_markup=markup)
 
 
@@ -101,13 +97,14 @@ async def get_chapter_by_number(message: Message, state: FSMContext):
         return await message.answer("Но ведь это даже не число! Давай еще раз!")
 
     if 1 <= number <= len(manga.chapter_list):
-        chapter = await driver.with_chapter_pages(manga.chapter_list[number - 1])
-        response = publisher.publish(chapter)
+        chapter = manga.chapter_list[number - 1]
+        url = await driver.publish_chapter(chapter)
 
         markup = await keyboard.get_in_place_keyboard(manga, number - 1)
-        url = response["url"]
-        await message.answer(f"<a href=\"{url}\">{chapter.info.name}</a>",
+
+        await message.answer(f"<a href=\"{url}\">{chapter.name}</a>",
                              reply_markup=markup)
+
         await state.finish()
 
     else:
@@ -128,9 +125,10 @@ async def in_place(
     manga = await driver.get_manga_info(manga_shortname)
 
     if action == "next":
-        next_chapter_info = manga.chapter_list[current_chapter]
-        next_chapter = await driver.with_chapter_pages(next_chapter_info)
-        url = publisher.publish(next_chapter)["url"]
-        markup = await keyboard.get_in_place_keyboard(manga, next_chapter_info.number)
-        await query.message.answer(f"<a href=\"{url}\">{next_chapter.info.name}</a>",
+        next_chapter = manga.chapter_list[current_chapter]
+        url = await driver.publish_chapter(next_chapter)
+
+        markup = await keyboard.get_in_place_keyboard(manga, next_chapter.number)
+
+        await query.message.answer(f"<a href=\"{url}\">{next_chapter.name}</a>",
                                    reply_markup=markup)

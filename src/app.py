@@ -1,6 +1,8 @@
+import asyncio
+
 import bot
 from aiogram import executor
-from loader import dispatcher
+from loader import dispatcher, driver
 
 
 async def on_startup(*args, **kwargs):
@@ -8,7 +10,7 @@ async def on_startup(*args, **kwargs):
 
 
 def on_shutdown(*args, **kwargs):
-    pass
+    asyncio.run(driver.close())
 
 
 if __name__ == '__main__':
