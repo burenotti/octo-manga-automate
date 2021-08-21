@@ -1,16 +1,15 @@
-import asyncio
-
 import bot
+import asyncio
 from aiogram import executor
 from loader import dispatcher, driver
 
 
 async def on_startup(*args, **kwargs):
-    pass
+    bot.include_default_handlers()
 
 
 def on_shutdown(*args, **kwargs):
-    asyncio.run(driver.close())
+    asyncio.ensure_future(driver.close())
 
 
 if __name__ == '__main__':
