@@ -1,12 +1,8 @@
-import json
-from typing import Iterable, Optional
 from asynctelegraph import TelegraphClient, types
-from aiohttp import ClientSession
 from yarl import URL
 
-from .renderer import render_chapter
+from .renderer import Renderer
 from backend.entities import Chapter
-from bs4 import BeautifulSoup
 
 
 class TelegraphPublisher:
@@ -20,9 +16,10 @@ class TelegraphPublisher:
         self.auth_url = author_url
         self.author_name = author_name
         self.client = TelegraphClient(access_token)
+        self.renderer = Renderer()
 
     async def publish_chapter(self, chapter: Chapter) -> URL:
-        html = render_chapter(chapter)
+        html = self.renderer.render_chapter(chapter)
         response = await self.client.create_page(title=chapter.info.name,
                                                  author_name=self.author_name,
                                                  html_content=html)
