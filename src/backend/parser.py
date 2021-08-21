@@ -57,6 +57,10 @@ class ReadMangaParser:
         name = dom.select_one('span.name').text
         description = dom.select_one('div.manga-description').get_text(strip=True)
         score = dom.select_one('.rating-block').get_attribute_list('data-score')[0]
+        if node := dom.select_one('.elem_author'):
+            author = node.get_text(strip=True)
+        else:
+            author = None
 
         # Parse thumbnail pictures
         thumbnails = []
@@ -74,7 +78,8 @@ class ReadMangaParser:
             url=url,
             score=score,
             thumbnail_urls=thumbnails,
-            chapter_list=chapter_list
+            chapter_list=chapter_list,
+            author=author
         )
 
     # async def get_entry_point(self, url: URL) -> URL:

@@ -42,8 +42,9 @@ async def get_manga_info(message: Message):
                                         "то скоро всё должно наладиться, обещаем! 😉")
 
         score = float(manga_info.score)
-        text = (f"<b>{manga_info.name}</b>\n\n"
-                f"{get_stars_score(score)}\n\n"
+        text = (f"<b>{manga_info.name}</b>\n"
+                f"\n{get_stars_score(score)}\n\n" +
+                (f"<b>Автор: </b> {manga_info.author}\n\n" if manga_info.author else "") +
                 f"{manga_info.description}")
 
         if manga_info.thumbnail_urls:

@@ -40,6 +40,7 @@ class MangaInfo:
     shortname: str = field(init=False)
     description: Optional[str] = None
     thumbnail_urls: Optional[List[URL]] = field(default_factory=list)
+    author: str = None
 
     def __post_init__(self):
         self.shortname = self.url.parts[1]
