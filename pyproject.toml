@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "octo-manga-automate"
+version = "0.1.0"
+description = "Octo Manga Automate is a bot that allows you to read manga from different sources in telegram via telegra.ph articles"
+authors = ["Артём Буренин <burenotti@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+aiohttp= "^3.7.4.post0"
+aiogram = "^2.14.3"
+python-dotenv = "^0.19.0"
+yarl = "^1.6.3"
+beautifulsoup4 = "^4.9.3"
+aioredis = "^2.0.0"
+Jinja2 = "^3.0.1"
+asynctelegraph = "^0.1.1"
+asyncpg = "^0.24.0"
+SQLAlchemy = "^1.4.23"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
