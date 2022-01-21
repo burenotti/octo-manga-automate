@@ -34,11 +34,12 @@ class ReadMangaParser:
     CHAPTER_NAME_REGEX = re.compile("(?P<volume_number>\d+)( - (?P<chapter_number>\d+))? (?P<chapter_name>.+)",
                                     re.MULTILINE)
 
-    def __init__(self, session=None, *args, **kwargs):
+    def __init__(self, session=None, headers: dict = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if session is None:
             session = ClientSession()
         self.session = session
+        self.headers = headers
 
     async def get_manga_info(self, url: URL) -> MangaInfo:
         """
@@ -50,7 +51,7 @@ class ReadMangaParser:
         :param url: url страницы манги с сайта (например, https://readmanga.live/monstr_1994)
         :return: Информация о манге, которую удалось спарсить.
         """
-        response = await self.session.get(url)
+        response = await self.session.get(url, headers=self.headers)
         dom = BeautifulSoup(await response.text(), features="html.parser")
 
         # Parse main info
@@ -100,19 +101,19 @@ class ReadMangaParser:
         """
         # Это проверка для 18+ контента
         url = url.with_query({"mtr": 1})
-        response = await self.session.get(url)
+        response = await self.session.get(url, headers=self.headers)
         pages = []
         # Этот код ужасен, но как сделать его лучше я не придумал.
         # Идея: Ссылки на страницы манги находятся в раздробленном состоянии
         # в JS массиве, этот код их оттуда достает.
         if response.ok:
-            start_token = 'rm_h.init('
+            start_token = 'rm_h.initReader('
             text = await response.text()
             start = text.find(start_token) + len(start_token)
             end = text.find(');', start)
             text = '[' + text[start:end] + ']'
             text = text.replace("'", '"')
-            pages_info = json.loads(text)[0]
+            pages_info = json.loads(text)[1]
             pages = [Page(number, URL(page[0] + page[2])) for number, page in enumerate(pages_info, 1)]
         return pages
 
@@ -124,7 +125,7 @@ class ReadMangaParser:
         """
         url = self.DOMAIN / "search/suggestion"
         try:
-            response = await self.session.post(url, data={
+            response = await self.session.get(url, headers=self.headers, params={
                 'query': query,
             })
             if not response.ok:
@@ -141,8 +142,7 @@ class ReadMangaParser:
                 ))
             return search_result
         except Exception as e:
-            print(e)
-            return []
+            raise e
 
     async def close(self):
         await self.session.close()

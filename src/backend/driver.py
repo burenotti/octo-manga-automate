@@ -26,7 +26,13 @@ class Driver:
             author_name: str = None,
             author_url: str = None,
     ):
-        self.parser = ReadMangaParser(session=session)
+        self.parser = ReadMangaParser(
+            session=session,
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                              "Chrome/93.0.4577.63 Safari/537.36 "
+            }
+        )
         self.publisher = TelegraphPublisher(
             access_token=telegraph_access_token,
             author_name=author_name,
