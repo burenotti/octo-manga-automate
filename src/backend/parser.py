@@ -133,9 +133,16 @@ class ReadMangaParser:
             json_data = await response.json()
             search_result = []
             for sug in json_data['suggestions']:
+
+                link = sug.get('link', '').lstrip('/')
+                if not URL(link).is_absolute():
+                    url = self.DOMAIN / link
+                else:
+                    url = URL(link)
+
                 search_result.append(SearchResult(
                     value=sug.get('value', ''),
-                    url=self.DOMAIN / sug.get('link', '').lstrip('/'),
+                    url=url,
                     names=sug.get('names'),
                     thumbnail=sug.get('thumbnail'),
                     additional=sug.get('additional')
