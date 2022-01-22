@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "aio-manga-automate"
+version = "0.1.0"
+description = "Read manga in telegram bot"
+authors = ["Артём Буренин <burenotti@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+yarl = "^1.7.2"
+beautifulsoup4 = "^4.10.0"
+aioredis = "^2.0.1"
+Jinja2 = "^3.0.3"
+asynctelegraph = "^0.1.1"
+aiohttp = "^3.8.1"
+aiogram = "^2.18"
+pydantic = "^1.9.0"
+python-dotenv = "^0.19.2"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
