@@ -7,7 +7,6 @@ from .parser import ReadMangaParser
 
 
 class Driver:
-
     """
     Драйвер, объединяя кэш и парсер источника,
     предоставляет API для использования бэкенда.
@@ -18,6 +17,12 @@ class Driver:
     """
 
     HOST = URL("https://readmanga.live/")
+
+    AVAILABLE_HOSTS = [
+        'readmanga.live',
+        'readmanga.io',
+        'mintmanga.live',
+    ]
 
     def __init__(
             self,
@@ -52,7 +57,10 @@ class Driver:
 
     async def get_manga_info(self, id: Union[str, URL]) -> entities.MangaInfo:
         if isinstance(id, str):
-            url = self.HOST.with_path(id)
+            if not URL(id).is_absolute():
+                url = self.HOST.with_path(id)
+            else:
+                url = URL(id)
         else:
             url = id
 
@@ -84,3 +92,11 @@ class Driver:
 
     async def close(self):
         return self.publisher.close()
+
+    def is_host_available(self, host: URL) -> bool:
+
+        return host in self.AVAILABLE_HOSTS
+
+    @property
+    def available_hosts(self) -> List[str]:
+        return self.AVAILABLE_HOSTS.copy()
