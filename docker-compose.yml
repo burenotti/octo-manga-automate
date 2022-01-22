@@ -1,0 +1,25 @@
+version: "3.9"
+
+networks:
+  app-network:
+    driver: bridge
+
+
+services:
+
+  app:
+    networks:
+      - app-network
+    image: readmangabot
+    restart: always
+    env_file: .env
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:latest
+    restart: always
+    networks:
+      - app-network
+    ports:
+      - "6379:6379"
