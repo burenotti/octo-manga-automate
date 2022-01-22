@@ -2,20 +2,20 @@ from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, Message
 from bot.states import NavStates
 from bot.keyboards import manga_info as keyboard
-from utils import include_shortname, default_on_key_error
+from utils import include_url, default_on_key_error
 from loader import dispatcher, driver, reply_renderer
 
 
 @dispatcher.callback_query_handler(keyboard.nav_callback_factory.filter(), state='*')
-@include_shortname(on_error=default_on_key_error)
+@include_url(on_error=default_on_key_error)
 async def navigate(
         query: CallbackQuery,
         callback_data: dict,
         state: FSMContext,
-        manga_shortname: str = None,
+        manga_url: str = None,
 ):
     action = callback_data.get('action')
-    manga = await driver.get_manga_info(manga_shortname)
+    manga = await driver.get_manga_info(manga_url)
 
     if action in ("forward", "back"):
         offset = int(callback_data.get('offset')) + (10 if action == "forward" else -10)
@@ -31,7 +31,7 @@ async def navigate(
     elif action == "number":
         await query.message.answer(f"Введите номер главы ({1}-{len(manga.chapter_list)})")
         await state.set_data({
-            "shortname": manga_shortname,
+            "url": manga_url,
         })
         await NavStates.ByNumber.set()
 
@@ -50,8 +50,8 @@ async def navigate(
 
 @dispatcher.message_handler(state=NavStates.ByNumber)
 async def get_chapter_by_number(message: Message, state: FSMContext):
-    shortname = (await state.get_data()).get("shortname")
-    manga = await driver.get_manga_info(shortname)
+    manga_url = (await state.get_data()).get("url")
+    manga = await driver.get_manga_info(manga_url)
     try:
 
         number = int(message.text)
@@ -78,16 +78,16 @@ async def get_chapter_by_number(message: Message, state: FSMContext):
 
 
 @dispatcher.callback_query_handler(keyboard.in_place_callback_factory.filter())
-@include_shortname(on_error=default_on_key_error)
+@include_url(on_error=default_on_key_error)
 async def in_place(
         query: CallbackQuery,
         callback_data: dict,
-        manga_shortname: str,
+        manga_url: str,
         **kwargs
 ):
     action = callback_data.get('action')
     current_chapter = int(callback_data.get('chapter'))
-    manga = await driver.get_manga_info(manga_shortname)
+    manga = await driver.get_manga_info(manga_url)
 
     if action == "next":
         next_chapter = manga.chapter_list[current_chapter]

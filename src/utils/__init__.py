@@ -1,14 +1,14 @@
 from aiogram.types import CallbackQuery
 
 from .redis_ import (
-    include_shortname,
+    include_url,
     create_manga_id,
     hash_manga_info
 )
 
 __all__ = [
     "create_manga_id",
-    "include_shortname",
+    "include_url",
     "hash_manga_info",
     "default_on_key_error",
     "from_callback_data",

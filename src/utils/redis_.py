@@ -8,7 +8,7 @@ from typing import Dict, Any, Callable, Awaitable
 redis_key_factory = CallbackData("manga_id", "manga_id")
 
 
-def include_shortname(
+def include_url(
         on_error: Callable[[CallbackQuery, Dict[str, Any]], Awaitable] = lambda a, b: None
 ):
     def decorator(function):
@@ -17,9 +17,9 @@ def include_shortname(
 
             manga_id = callback_data.get("manga_id")
             key = redis_key_factory.new(manga_id)
-            manga_shortname = await redis.get(key)
+            manga_url = await redis.get(key)
 
-            if manga_shortname is None:
+            if manga_url is None:
 
                 await on_error(query, callback_data)
 
@@ -29,7 +29,7 @@ def include_shortname(
                                callback_data,
                                *args,
                                **kwargs,
-                               manga_shortname=manga_shortname.decode('utf-8'))
+                               manga_url=manga_url.decode('utf-8'))
 
         return wrapper
 
@@ -43,5 +43,5 @@ def hash_manga_info(manga_info: MangaInfo):
 async def create_manga_id(manga: MangaInfo):
     manga_hash = hash_manga_info(manga)
     key = redis_key_factory.new(manga_hash)
-    await redis.set(key, manga.shortname)
+    await redis.set(key, str(manga.url))
     return manga_hash
