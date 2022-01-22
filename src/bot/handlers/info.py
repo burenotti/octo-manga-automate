@@ -1,3 +1,5 @@
+import itertools
+
 from utils import get_stars_score
 from aiogram.dispatcher.filters import Command, Text
 from aiogram.types import Message, CallbackQuery, InputMediaPhoto
@@ -29,8 +31,15 @@ async def get_manga_info(message: Message):
 
             url = URL(urls[0].url)
 
-        if url.host != 'readmanga.live':
-            return await message.answer("Ты чего? Я работаю только с readmanga.live")
+        if not driver.is_host_available(url.host):
+
+            resource_list_str = '\n'.join(
+                itertools.starmap("{}. {}".format, enumerate(driver.available_hosts, 1))
+            )
+
+            return await message.answer(
+                "Извини, я работаю только с этими ресурсами:\n" + resource_list_str
+            )
 
         try:
 
