@@ -1,7 +1,7 @@
 import dataclasses
 
 import jinja2
-from backend.entities import MangaInfo
+from backend.entities import MangaInfo, Chapter, ChapterInfo
 
 
 class ReplyRenderer:
@@ -19,6 +19,7 @@ class ReplyRenderer:
 
         self.templates = {
             'manga_info': self._environment.get_template("manga_info.html"),
+            'ready_chapter_reply': self._environment.get_template("ready_chapter_reply.html"),
         }
 
     @staticmethod
@@ -36,3 +37,11 @@ class ReplyRenderer:
 
     def manga_info(self, manga_info: MangaInfo, language='ru') -> str:
         return self.render('manga_info', dataclasses.asdict(manga_info), language=language)
+
+    def ready_chapter(self, ready_url: str, chapter: ChapterInfo, language='ru'):
+        return self.render(
+            'ready_chapter_reply',
+            chapter=chapter,
+            ready_url=ready_url,
+            language=language
+        )

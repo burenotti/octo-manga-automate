@@ -3,10 +3,7 @@ from aiogram.types import CallbackQuery, Message
 from bot.states import NavStates
 from bot.keyboards import manga_info as keyboard
 from utils import include_shortname, default_on_key_error
-from loader import (
-    dispatcher,
-    driver,
-)
+from loader import dispatcher, driver, reply_renderer
 
 
 @dispatcher.callback_query_handler(keyboard.nav_callback_factory.filter(), state='*')
@@ -46,8 +43,9 @@ async def navigate(
 
         markup = await keyboard.get_in_place_keyboard(manga, number)
 
-        await query.message.answer(f"<a href=\"{url}\">{chapter.name}</a>",
-                                   reply_markup=markup)
+        text = reply_renderer.ready_chapter(url, chapter)
+
+        await query.message.answer(text, reply_markup=markup)
 
 
 @dispatcher.message_handler(state=NavStates.ByNumber)
@@ -68,8 +66,9 @@ async def get_chapter_by_number(message: Message, state: FSMContext):
 
         markup = await keyboard.get_in_place_keyboard(manga, number - 1)
 
-        await message.answer(f"<a href=\"{url}\">{chapter.name}</a>",
-                             reply_markup=markup)
+        text = reply_renderer.ready_chapter(url, chapter)
+
+        await message.answer(text, reply_markup=markup)
 
         await state.finish()
 
@@ -96,5 +95,5 @@ async def in_place(
 
         markup = await keyboard.get_in_place_keyboard(manga, next_chapter.number)
 
-        await query.message.answer(f"<a href=\"{url}\">{next_chapter.name}</a>",
-                                   reply_markup=markup)
+        text = reply_renderer.ready_chapter(url, next_chapter)
+        await query.message.answer(text, reply_markup=markup)

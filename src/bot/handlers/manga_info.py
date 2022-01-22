@@ -10,7 +10,7 @@ from utils import (
 )
 
 from loader import (
-    dispatcher, driver
+    dispatcher, driver, reply_renderer
 )
 
 
@@ -30,8 +30,10 @@ async def info_actions(
         chapter_info = manga.chapter_list[0]
         url = await driver.publish_chapter(chapter_info)
         markup = await keyboard.get_in_place_keyboard(manga, 1)
-        await query.message.answer(f"<a href=\"{url}\">{chapter_info.name}</a>",
-                                   reply_markup=markup)
+
+        text = reply_renderer.ready_chapter(url, chapter_info)
+
+        await query.message.answer(text, reply_markup=markup)
     else:
         await query.message.answer("У нас какие-то проблемы: "
                                    "пока не выходит получить первую главу( "
