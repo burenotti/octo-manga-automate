@@ -7,20 +7,12 @@ from .redis_ import (
 )
 
 __all__ = [
-    "get_stars_score",
     "create_manga_id",
     "include_shortname",
     "hash_manga_info",
     "default_on_key_error",
     "from_callback_data",
 ]
-
-
-def get_stars_score(score: float, max_score: float = 5.0):
-    decimal_score = int(score / max_score * 10)
-    stars = '💛' * decimal_score
-    moons = '🖤' * (10 - decimal_score)
-    return f"{stars}{moons} ({score} / {max_score})"
 
 
 async def default_on_key_error(query: CallbackQuery, callback_data: dict):
