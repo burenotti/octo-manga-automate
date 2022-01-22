@@ -11,10 +11,10 @@ class Renderer:
         )
 
         self.templates = {
-            'chapter.html': self._environment.get_template("chapter.html"),
+            'chapter_article.html': self._environment.get_template("chapter_article.html"),
         }
 
-    def render_chapter(self, chapter: Chapter, template_name="chapter.html") -> str:
+    def render_chapter(self, chapter: Chapter, template_name="chapter_article.html") -> str:
         if template_name in self.templates:
             template = self.templates[template_name]
         else:
