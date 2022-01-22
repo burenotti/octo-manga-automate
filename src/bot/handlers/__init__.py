@@ -2,5 +2,6 @@ __all__ = [
     "search",
     "info",
     "chapters",
-    "start"
+    "start",
+    "manga_info"
 ]

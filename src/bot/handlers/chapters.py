@@ -2,49 +2,15 @@ from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, Message
 from bot.states import NavStates
 from bot.keyboards import manga_info as keyboard
-from utils import include_shortname
+from utils import include_shortname, default_on_key_error
 from loader import (
     dispatcher,
     driver,
 )
 
 
-async def on_key_error(query: CallbackQuery, callback_data: dict):
-    await query.message.delete_reply_markup()
-    await query.answer("Данная кнопка устарела и больше не работает.")
-
-
-@dispatcher.callback_query_handler(keyboard.action_callback_factory.filter())
-@include_shortname(on_error=on_key_error)
-async def info_actions(
-        query: CallbackQuery,
-        callback_data: dict,
-        manga_shortname: str = None,
-        **kwargs
-):
-    action = callback_data.get('action')
-    manga = await driver.get_manga_info(manga_shortname)
-
-    if action == "start_read":
-        if manga.chapter_list:
-            chapter_info = manga.chapter_list[0]
-            url = await driver.publish_chapter(chapter_info)
-            markup = await keyboard.get_in_place_keyboard(manga, 1)
-            await query.message.answer(f"<a href=\"{url}\">{chapter_info.name}</a>",
-                                       reply_markup=markup)
-
-    elif action == "favourite":
-        return await query.answer("Очень жаль, но это пока не работает(")
-
-    elif action == "nav":
-
-        return await query.message.edit_reply_markup(
-            await keyboard.get_chapter_keyboard(manga)
-        )
-
-
 @dispatcher.callback_query_handler(keyboard.nav_callback_factory.filter(), state='*')
-@include_shortname(on_error=on_key_error)
+@include_shortname(on_error=default_on_key_error)
 async def navigate(
         query: CallbackQuery,
         callback_data: dict,
@@ -113,7 +79,7 @@ async def get_chapter_by_number(message: Message, state: FSMContext):
 
 
 @dispatcher.callback_query_handler(keyboard.in_place_callback_factory.filter())
-@include_shortname(on_error=on_key_error)
+@include_shortname(on_error=default_on_key_error)
 async def in_place(
         query: CallbackQuery,
         callback_data: dict,
