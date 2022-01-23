@@ -5,6 +5,7 @@ from aiogram import Dispatcher, Bot
 from config import BOT_TOKEN
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from backend.driver import Driver
+from backend.reply_render import ReplyRenderer
 
 bot = Bot(token=BOT_TOKEN, parse_mode="html")
 
@@ -26,3 +27,5 @@ driver = Driver(
     author_name=config.TELEGRAPH_AUTHOR_NAME,
     author_url=config.TELEGRAPH_AUTHOR_URL,
 )
+
+reply_renderer = ReplyRenderer()

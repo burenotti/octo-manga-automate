@@ -1,9 +1,11 @@
-from utils import get_stars_score
+import itertools
+
+
 from aiogram.dispatcher.filters import Command, Text
 from aiogram.types import Message, CallbackQuery, InputMediaPhoto
 from yarl import URL
 
-from loader import dispatcher, bot, driver
+from loader import dispatcher, driver, reply_renderer
 from bot.keyboards import manga_info as keyboard
 
 
@@ -29,8 +31,15 @@ async def get_manga_info(message: Message):
 
             url = URL(urls[0].url)
 
-        if url.host != 'readmanga.live':
-            return await message.answer("Ты чего? Я работаю только с readmanga.live")
+        if not driver.is_host_available(url.host):
+
+            resource_list_str = '\n'.join(
+                itertools.starmap("{}. {}".format, enumerate(driver.available_hosts, 1))
+            )
+
+            return await message.answer(
+                "Извини, я работаю только с этими ресурсами:\n" + resource_list_str
+            )
 
         try:
 
@@ -42,10 +51,8 @@ async def get_manga_info(message: Message):
                                         "то скоро всё должно наладиться, обещаем! 😉")
 
         score = float(manga_info.score)
-        text = (f"<b>{manga_info.name}</b>\n"
-                f"\n{get_stars_score(score)}\n\n" +
-                (f"<b>Автор: </b> {manga_info.author}\n\n" if manga_info.author else "") +
-                f"{manga_info.description}")
+
+        text = reply_renderer.manga_info(manga_info)
 
         if manga_info.thumbnail_urls:
             media = list(map(InputMediaPhoto, manga_info.thumbnail_urls))

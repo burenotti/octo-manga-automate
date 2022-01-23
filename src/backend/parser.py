@@ -2,7 +2,7 @@ import json
 import re
 from yarl import URL
 from aiohttp import ClientSession
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 from backend.entities import Page, ChapterInfo, MangaInfo, SearchResult
 from typing import List
 
@@ -29,16 +29,22 @@ class ReadMangaParser:
     На мой взгляд это неправильно, необходимо разделить запросы и парсинг содержимого на две сущности.
     """
 
-    DOMAIN = URL("https://readmanga.live/")
+    DOMAIN = URL("https://readmanga.io/")
 
-    CHAPTER_NAME_REGEX = re.compile("(?P<volume_number>\d+)( - (?P<chapter_number>\d+))? (?P<chapter_name>.+)",
+    CHAPTER_NAME_REGEX = re.compile(r"(?P<volume_number>\d+)( - (?P<chapter_number>\d+))? (?P<chapter_name>.+)",
                                     re.MULTILINE)
 
-    def __init__(self, session=None, *args, **kwargs):
+    PAGES_REGEX = re.compile(
+        r"['\"](?P<link0>http(s)?://[a-zA-Z0-9./-_?]+)\s*['\"],"
+        r"\s*['\"]['\"]\s*,\s*['\"](?P<link1>[a-zA-Z0-9./-_?&]+)['\"]"
+    )
+
+    def __init__(self, session=None, headers: dict = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if session is None:
             session = ClientSession()
         self.session = session
+        self.headers = headers
 
     async def get_manga_info(self, url: URL) -> MangaInfo:
         """
@@ -50,7 +56,10 @@ class ReadMangaParser:
         :param url: url страницы манги с сайта (например, https://readmanga.live/monstr_1994)
         :return: Информация о манге, которую удалось спарсить.
         """
-        response = await self.session.get(url)
+        response = await self.session.get(url, headers=self.headers)
+        if not response.ok:
+            raise HttpError(response.status, "")
+
         dom = BeautifulSoup(await response.text(), features="html.parser")
 
         # Parse main info
@@ -70,7 +79,7 @@ class ReadMangaParser:
 
         # Parse chapter list
         chapter_links = dom.select('.chapters-link>table>tr>td>a')
-        chapter_list = self.parse_chapter_list(chapter_links)
+        chapter_list = self.parse_chapter_list(url.origin(), chapter_links)
 
         return MangaInfo(
             name=name,
@@ -100,21 +109,27 @@ class ReadMangaParser:
         """
         # Это проверка для 18+ контента
         url = url.with_query({"mtr": 1})
-        response = await self.session.get(url)
-        pages = []
+        response = await self.session.get(url, headers=self.headers)
         # Этот код ужасен, но как сделать его лучше я не придумал.
         # Идея: Ссылки на страницы манги находятся в раздробленном состоянии
         # в JS массиве, этот код их оттуда достает.
+        # if response.ok:
+        #     start_token = 'rm_h.initReader('
+        #     text = await response.text()
+        #     start = text.find(start_token) + len(start_token)
+        #     end = text.find(');', start)
+        #     text = '[' + text[start:end] + ']'
+        #     text = text.replace("'", '"')
+        #     pages_info = json.loads(text)[1]
+        #     pages = [Page(number, URL(page[0] + page[2])) for number, page in enumerate(pages_info, 1)]
+        # return pages
+
         if response.ok:
-            start_token = 'rm_h.init('
-            text = await response.text()
-            start = text.find(start_token) + len(start_token)
-            end = text.find(');', start)
-            text = '[' + text[start:end] + ']'
-            text = text.replace("'", '"')
-            pages_info = json.loads(text)[0]
-            pages = [Page(number, URL(page[0] + page[2])) for number, page in enumerate(pages_info, 1)]
-        return pages
+            matches = self.PAGES_REGEX.findall(await response.text())
+            return [Page(number, URL(page[0] + page[2])) for number, page in enumerate(matches)]
+
+        else:
+            raise HttpError(response.status, "")
 
     async def search(self, query: str) -> List[SearchResult]:
         """
@@ -124,7 +139,7 @@ class ReadMangaParser:
         """
         url = self.DOMAIN / "search/suggestion"
         try:
-            response = await self.session.post(url, data={
+            response = await self.session.get(url, headers=self.headers, params={
                 'query': query,
             })
             if not response.ok:
@@ -132,17 +147,23 @@ class ReadMangaParser:
             json_data = await response.json()
             search_result = []
             for sug in json_data['suggestions']:
+
+                link = sug.get('link', '').lstrip('/')
+                if not URL(link).is_absolute():
+                    url = self.DOMAIN / link
+                else:
+                    url = URL(link)
+
                 search_result.append(SearchResult(
                     value=sug.get('value', ''),
-                    url=self.DOMAIN / sug.get('link', '').lstrip('/'),
+                    url=url,
                     names=sug.get('names'),
                     thumbnail=sug.get('thumbnail'),
                     additional=sug.get('additional')
                 ))
             return search_result
         except Exception as e:
-            print(e)
-            return []
+            raise e
 
     async def close(self):
         await self.session.close()
@@ -155,9 +176,10 @@ class ReadMangaParser:
         else:
             return url
 
-    def parse_chapter_list(self, link_list: List[BeautifulSoup]) -> List[ChapterInfo]:
+    def parse_chapter_list(self, host: URL, link_list: List[Tag]) -> List[ChapterInfo]:
         """
         Вспомогательная функция. Парсит список глав с основой страницы манги.
+        :param host:
         :param link_list:
         :return:
         """
@@ -169,7 +191,7 @@ class ReadMangaParser:
                 groups = match.groupdict()
                 info = ChapterInfo(
                     name=groups.get('chapter_name', ''),
-                    url=self.DOMAIN / link.get_attribute_list('href')[0].lstrip('/'),
+                    url=host / link.get_attribute_list('href')[0].lstrip('/'),
                     number=index,
                     raw_number=groups.get('chapter_number'),
                     volume_number=int(groups.get('volume_number', 1))
@@ -177,3 +199,9 @@ class ReadMangaParser:
                 chapter_list.append(info)
 
         return chapter_list
+
+
+class HttpError(Exception):
+
+    def __init__(self, status_code: int, comment: str):
+        super().__init__(f"http request failed with f{status_code} status code. {comment}")
