@@ -10,11 +10,12 @@ services:
   app:
     networks:
       - app-network
-    image: readmangabot
+    build: .
     restart: always
     env_file: .env
     depends_on:
       - redis
+      - postgres
 
   redis:
     image: redis:latest
@@ -23,3 +24,10 @@ services:
       - app-network
     ports:
       - "6379:6379"
+
+  postgres:
+    image: postgres:latest
+    networks:
+      - app-network
+    restart: always
+    env_file: .env
