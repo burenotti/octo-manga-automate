@@ -1,7 +1,7 @@
 import json
 import re
 from yarl import URL
-from aiohttp import ClientSession
+from aiohttp import ClientSession, TCPConnector
 from bs4 import BeautifulSoup, Tag
 from backend.entities import Page, ChapterInfo, MangaInfo, SearchResult
 from typing import List
@@ -42,7 +42,9 @@ class ReadMangaParser:
     def __init__(self, session=None, headers: dict = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if session is None:
-            session = ClientSession()
+            session = ClientSession(
+                connector=TCPConnector(verify_ssl=False)
+            )
         self.session = session
         self.headers = headers
 
@@ -148,7 +150,8 @@ class ReadMangaParser:
             search_result = []
             for sug in json_data['suggestions']:
 
-                link = sug.get('link', '').lstrip('/')
+                link: str = sug.get('link', '').lstrip('/')
+
                 if not URL(link).is_absolute():
                     url = self.DOMAIN / link
                 else:

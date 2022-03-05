@@ -38,12 +38,13 @@ async def navigate(
     elif action == "open":
 
         number = int(callback_data.get("chapter"))
-        chapter = manga.chapter_list[number - 1]
+        chapter_info = manga.chapter_list[number - 1]
+        chapter = await manga_source.with_chapter_pages(chapter_info)
         url = await publisher.publish_chapter(chapter)
 
         markup = await keyboard.get_in_place_keyboard(manga, number)
 
-        text = reply_renderer.ready_chapter(url, chapter)
+        text = reply_renderer.ready_chapter(url, chapter_info)
 
         await query.message.answer(text, reply_markup=markup)
 
@@ -61,12 +62,13 @@ async def get_chapter_by_number(message: Message, state: FSMContext):
         return await message.answer("Но ведь это даже не число! Давай еще раз!")
 
     if 1 <= number <= len(manga.chapter_list):
-        chapter = manga.chapter_list[number - 1]
+        chapter_info = manga.chapter_list[number - 1]
+        chapter = await manga_source.with_chapter_pages(chapter_info)
         url = await publisher.publish_chapter(chapter)
 
         markup = await keyboard.get_in_place_keyboard(manga, number - 1)
 
-        text = reply_renderer.ready_chapter(url, chapter)
+        text = reply_renderer.ready_chapter(url, chapter_info)
 
         await message.answer(text, reply_markup=markup)
 
@@ -91,7 +93,8 @@ async def in_place(
 
     if action == "next":
         next_chapter = manga.chapter_list[current_chapter]
-        url = await publisher.publish_chapter(next_chapter)
+        chapter = await manga_source.with_chapter_pages(next_chapter)
+        url = await publisher.publish_chapter(chapter)
 
         markup = await keyboard.get_in_place_keyboard(manga, next_chapter.number)
 

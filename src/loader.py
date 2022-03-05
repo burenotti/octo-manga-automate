@@ -1,6 +1,6 @@
 import aioredis
 import config
-from aiohttp import ClientSession
+from aiohttp import ClientSession, TCPConnector
 from aiogram import Dispatcher, Bot
 
 from backend.cache import RedisMangaSource
@@ -20,7 +20,9 @@ redis = aioredis.Redis(
     port=config.REDIS_PORT,
 )
 
-session = ClientSession()
+session = ClientSession(
+    connector=TCPConnector(verify_ssl=False)
+)
 
 dispatcher = Dispatcher(bot, storage=fsm_storage)
 

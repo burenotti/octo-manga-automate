@@ -11,8 +11,12 @@ class ReadMangaSource(MangaSource):
 
     def __init__(self):
         super(ReadMangaSource, self).__init__()
-        self.parser = ReadMangaParser()
-        self.host = URL('https://readmanga.live/')
+        self.parser = ReadMangaParser(headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                              "AppleWebKit/537.36 (KHTML, like Gecko) "
+                              "Chrome/93.0.4577.63 Safari/537.36 "
+            })
+        self.host = URL('https://readmanga.io/')
 
     async def search(self, query: str) -> List[entities.SearchResult]:
         return await self.parser.search(query)
@@ -26,13 +30,13 @@ class ReadMangaSource(MangaSource):
         pass
 
     async def get_manga_info(self, identity: Union[str, URL]) -> entities.MangaInfo:
-        if isinstance(id, str):
-            if not URL(id).is_absolute():
-                url = self.host.with_path(id)
+        if isinstance(identity, str):
+            if not URL(identity).is_absolute():
+                url = self.host.with_path(identity)
             else:
-                url = URL(id)
+                url = URL(identity)
         else:
-            url = id
+            url = identity
 
         return await self.parser.get_manga_info(url)
 

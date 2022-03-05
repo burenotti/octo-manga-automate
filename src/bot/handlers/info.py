@@ -12,6 +12,7 @@ from bot.keyboards import manga_info as keyboard
 @dispatcher.message_handler(Command("info"))
 async def get_manga_info(message: Message):
     urls = [ent for ent in message.entities if ent.type in ("url", "text_link")]
+
     if len(urls) == 0:
 
         await message.answer("Так нельзя! После <b>/info</b> вводи ссылку!")
@@ -45,10 +46,12 @@ async def get_manga_info(message: Message):
                 "Извини, я работаю только с этими ресурсами:\n" + resource_list_str
             )
 
-        except Exception:
+        except Exception as e:
 
-            return await message.answer("Что-то пошло не так! 😱 Если ссылка правильная, "
-                                        "то скоро всё должно наладиться, обещаем! 😉")
+            await message.answer("Что-то пошло не так! 😱 Если ссылка правильная, "
+                                 "то скоро всё должно наладиться, обещаем! 😉")
+
+            raise e
 
         text = reply_renderer.manga_info(manga_info)
 

@@ -33,3 +33,6 @@ class RedisMangaSource(MangaSource):
 
     async def with_chapter_pages(self, chapter_info: entities.ChapterInfo) -> entities.Chapter:
         return await super().with_chapter_pages(chapter_info)
+
+    async def close(self) -> None:
+        await super().close()

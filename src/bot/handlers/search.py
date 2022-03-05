@@ -18,13 +18,13 @@ async def search(query: InlineQuery):
     result = await manga_source.search(query.query)
     items = []
     for index, match in enumerate(result):
-        if match.type == ResultType.Manga:
+        if match.type == ResultType.Manga and match.thumbnail is not None:
             input_content = InputTextMessageContent(f"/info <a href=\"{match.url!s}\">ссылка</a>")
             items.append(InlineQueryResultArticle(
                 id=str(index),
                 title=match.value,
                 thumb_url=str(match.thumbnail),
-                input_message_content=input_content
+                input_message_content=input_content,
             ))
 
     await query.answer(items, cache_time=1, is_personal=True)
