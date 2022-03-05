@@ -3,7 +3,7 @@ from aiogram.types import CallbackQuery, Message
 from bot.states import NavStates
 from bot.keyboards import manga_info as keyboard
 from utils import include_url, default_on_key_error
-from loader import dispatcher, driver, reply_renderer
+from loader import dispatcher, reply_renderer, manga_source, publisher
 
 
 @dispatcher.callback_query_handler(keyboard.nav_callback_factory.filter(), state='*')
@@ -15,7 +15,7 @@ async def navigate(
         manga_url: str = None,
 ):
     action = callback_data.get('action')
-    manga = await driver.get_manga_info(manga_url)
+    manga = await manga_source.get_manga_info(manga_url)
 
     if action in ("forward", "back"):
         offset = int(callback_data.get('offset')) + (10 if action == "forward" else -10)
@@ -39,7 +39,7 @@ async def navigate(
 
         number = int(callback_data.get("chapter"))
         chapter = manga.chapter_list[number - 1]
-        url = await driver.publish_chapter(chapter)
+        url = await publisher.publish_chapter(chapter)
 
         markup = await keyboard.get_in_place_keyboard(manga, number)
 
@@ -51,7 +51,7 @@ async def navigate(
 @dispatcher.message_handler(state=NavStates.ByNumber)
 async def get_chapter_by_number(message: Message, state: FSMContext):
     manga_url = (await state.get_data()).get("url")
-    manga = await driver.get_manga_info(manga_url)
+    manga = await manga_source.get_manga_info(manga_url)
     try:
 
         number = int(message.text)
@@ -62,7 +62,7 @@ async def get_chapter_by_number(message: Message, state: FSMContext):
 
     if 1 <= number <= len(manga.chapter_list):
         chapter = manga.chapter_list[number - 1]
-        url = await driver.publish_chapter(chapter)
+        url = await publisher.publish_chapter(chapter)
 
         markup = await keyboard.get_in_place_keyboard(manga, number - 1)
 
@@ -87,11 +87,11 @@ async def in_place(
 ):
     action = callback_data.get('action')
     current_chapter = int(callback_data.get('chapter'))
-    manga = await driver.get_manga_info(manga_url)
+    manga = await manga_source.get_manga_info(manga_url)
 
     if action == "next":
         next_chapter = manga.chapter_list[current_chapter]
-        url = await driver.publish_chapter(next_chapter)
+        url = await publisher.publish_chapter(next_chapter)
 
         markup = await keyboard.get_in_place_keyboard(manga, next_chapter.number)
 

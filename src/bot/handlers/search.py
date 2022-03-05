@@ -1,10 +1,10 @@
-from random import randint
 from aiogram.dispatcher.filters import Command
-from aiogram.types import Message, InlineQuery, InlineQueryResultArticle, InputTextMessageContent
-from hashlib import md5
-from loader import dispatcher, driver
+from loader import dispatcher, manga_source
 from backend.entities import ResultType
 from bot.keyboards import search_keyboard
+from aiogram.types import (
+    Message, InlineQuery, InlineQueryResultArticle, InputTextMessageContent
+)
 
 
 @dispatcher.message_handler(Command("search"))
@@ -15,7 +15,7 @@ async def search(message: Message):
 
 @dispatcher.inline_handler()
 async def search(query: InlineQuery):
-    result = await driver.search(query.query)
+    result = await manga_source.search(query.query)
     items = []
     for index, match in enumerate(result):
         if match.type == ResultType.Manga:

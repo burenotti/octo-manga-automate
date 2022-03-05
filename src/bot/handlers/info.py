@@ -1,18 +1,17 @@
 import itertools
 
-
-from aiogram.dispatcher.filters import Command, Text
-from aiogram.types import Message, CallbackQuery, InputMediaPhoto
+from aiogram.dispatcher.filters import Command
+from aiogram.types import Message, InputMediaPhoto
 from yarl import URL
 
-from loader import dispatcher, driver, reply_renderer
+from backend.exceptions import UnprocessableEntity
+from loader import dispatcher, driver, reply_renderer, manga_source
 from bot.keyboards import manga_info as keyboard
 
 
 @dispatcher.message_handler(Command("info"))
 async def get_manga_info(message: Message):
-
-    urls = list(filter(lambda e: e.type in ("url", "text_link"), message.entities))
+    urls = [ent for ent in message.entities if ent.type in ("url", "text_link")]
     if len(urls) == 0:
 
         await message.answer("Так нельзя! После <b>/info</b> вводи ссылку!")
@@ -31,9 +30,14 @@ async def get_manga_info(message: Message):
 
             url = URL(urls[0].url)
 
-        if not driver.is_host_available(url.host):
+        try:
+
+            manga_info = await manga_source.get_manga_info(url)
+
+        except UnprocessableEntity:
 
             resource_list_str = '\n'.join(
+                # TODO: Выпилить здесь драйвер
                 itertools.starmap("{}. {}".format, enumerate(driver.available_hosts, 1))
             )
 
@@ -41,16 +45,10 @@ async def get_manga_info(message: Message):
                 "Извини, я работаю только с этими ресурсами:\n" + resource_list_str
             )
 
-        try:
-
-            manga_info = await driver.get_manga_info(url)
-
-        except Exception as e:
+        except Exception:
 
             return await message.answer("Что-то пошло не так! 😱 Если ссылка правильная, "
                                         "то скоро всё должно наладиться, обещаем! 😉")
-
-        score = float(manga_info.score)
 
         text = reply_renderer.manga_info(manga_info)
 

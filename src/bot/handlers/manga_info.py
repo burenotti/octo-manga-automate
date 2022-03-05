@@ -10,7 +10,7 @@ from utils import (
 )
 
 from loader import (
-    dispatcher, driver, reply_renderer
+    dispatcher, reply_renderer, publisher, manga_source
 )
 
 
@@ -24,11 +24,11 @@ async def info_actions(
         manga_url: str = None,
         **kwargs
 ):
-    manga = await driver.get_manga_info(manga_url)
+    manga = await manga_source.get_manga_info(manga_url)
 
     if manga.chapter_list:
         chapter_info = manga.chapter_list[0]
-        url = await driver.publish_chapter(chapter_info)
+        url = await publisher.publish_chapter(chapter_info)
         markup = await keyboard.get_in_place_keyboard(manga, 1)
 
         text = reply_renderer.ready_chapter(url, chapter_info)
@@ -50,7 +50,7 @@ async def info_actions(
         manga_url: str = None,
         **kwargs
 ):
-    manga = await driver.get_manga_info(manga_url)
+    manga = await manga_source.get_manga_info(manga_url)
 
     return await query.message.edit_reply_markup(
         await keyboard.get_chapter_keyboard(manga)

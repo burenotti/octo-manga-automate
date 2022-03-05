@@ -1,7 +1,7 @@
 import bot
 import asyncio
 from aiogram import executor
-from loader import dispatcher, driver
+from loader import dispatcher, manga_source
 
 
 async def on_startup(*args, **kwargs):
@@ -9,7 +9,7 @@ async def on_startup(*args, **kwargs):
 
 
 def on_shutdown(*args, **kwargs):
-    asyncio.ensure_future(driver.close())
+    asyncio.ensure_future(manga_source.close())
 
 
 if __name__ == '__main__':
