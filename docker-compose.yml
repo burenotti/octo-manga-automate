@@ -10,7 +10,9 @@ services:
   app:
     networks:
       - app-network
-    image: readmangabot
+    build: .
+    volumes:
+      - .:/app:ro
     restart: always
     env_file: .env
     depends_on:
